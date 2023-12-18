@@ -261,6 +261,10 @@ require('lazy').setup({
     build = ':TSUpdate',
   },
 
+  {
+  'jakemason/ouroboros',
+    requires = { {'nvim-lua/plenary.nvim'} }
+  },
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
@@ -322,7 +326,6 @@ vim.o.completeopt = 'menuone,noselect'
 vim.o.termguicolors = true
 
 -- [[ Basic Keymaps ]]
-
 -- Keymaps for better default experience
 -- See `:help vim.keymap.set()`
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
@@ -611,7 +614,7 @@ mason_lspconfig.setup_handlers {
   function(server_name)
     require('lspconfig')[server_name].setup {
       capabilities = capabilities,
-      on_attach = on_attach,
+      on_attach = on_attach_global,
       settings = servers[server_name],
       filetypes = (servers[server_name] or {}).filetypes,
     }
@@ -621,12 +624,31 @@ mason_lspconfig.setup_handlers {
 --
 -- My additions
 --
+local on_attach_local_zig = function(_, bufnr)
+  local nmap = function(keys, func, desc)
+    if desc then
+      desc = 'LSP: ' .. desc
+    end
+
+    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+  end
+
+  nmap('gq', ":w<cr>:!zig fmt %<cr>", 'zig format file')
+end
+
+local on_attach_zig = function(_, bufnr)
+  on_attach_global(_, bufnr)
+  on_attach_local_zig(_, bufnr)
+end
+
+
 local lspconfig = require('lspconfig')
 lspconfig.zls.setup {
   capabilities = capabilities,
-  on_attach = on_attach_global,
+  on_attach = on_attach_zig,
 }
-vim.g.zig_fmt_autosave=1
+vim.g.zig_fmt_autosave=0
+
 
 local on_attach_local_python = function(_, bufnr)
   local nmap = function(keys, func, desc)
@@ -655,6 +677,7 @@ local on_attach_local_cpp = function(_, bufnr)
   end
 
   nmap('gq', ":pyf /usr/share/clang/clang-format-16/clang-format.py<cr>", 'clang-format file')
+  nmap('<leader>po', ":Ouroboros<CR>", 'switch between c/cpp source file and header file')
 end
 
 local on_attach_cpp = function(_, bufnr)
