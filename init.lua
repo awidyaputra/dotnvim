@@ -661,12 +661,19 @@ local on_attach_local_python = function(_, bufnr)
   end
 
   nmap('gq', ":w<cr>:!black %<cr>", 'black format file')
+  vim.opt.tabstop = 4
+  vim.opt.shiftwidth = 4
 end
 
 local on_attach_python = function(_, bufnr)
   on_attach_global(_, bufnr)
   on_attach_local_python(_, bufnr)
 end
+
+lspconfig.pyright.setup {
+  on_attach = on_attach_python
+}
+
 
 local on_attach_local_cpp = function(_, bufnr)
   local nmap = function(keys, func, desc)
@@ -686,15 +693,36 @@ local on_attach_cpp = function(_, bufnr)
   on_attach_local_cpp(_, bufnr)
 end
 
-
-lspconfig.pyright.setup {
-  on_attach = on_attach_python
-}
-
 lspconfig.clangd.setup {
   cmd = {'clangd', '--header-insertion=never'},
   on_attach = on_attach_cpp
 }
+
+
+local on_attach_local_glsl = function(_, bufnr)
+  local nmap = function(keys, func, desc)
+    if desc then
+      desc = 'LSP: ' .. desc
+    end
+
+    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+  end
+
+  -- nmap('gq', ":w<cr>:!zig fmt %<cr>", 'zig format file')
+end
+
+local on_attach_glsl = function(_, bufnr)
+  on_attach_global(_, bufnr)
+  on_attach_local_glsl(_, bufnr)
+end
+
+lspconfig.glsl_analyzer.setup{
+  on_attach = on_attach_glsl
+}
+
+
+
+
 --
 -- end My additions
 --
