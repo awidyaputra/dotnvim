@@ -283,6 +283,8 @@ require('lazy').setup({
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
+vim.o.pumheight = 10
+vim.o.pumblend = 10
 
 -- Set highlight on search
 vim.o.hlsearch = false
@@ -501,6 +503,7 @@ vim.defer_fn(function()
   }
 end, 0)
 
+
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
 local on_attach_global = function(_, bufnr)
@@ -532,6 +535,7 @@ local on_attach_global = function(_, bufnr)
   -- See `:help K` for why this keymap
   nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
   nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+  vim.keymap.set('i', '<C-k>', vim.lsp.buf.signature_help, {buffer=bufnr , desc='LSP: Signature Documentation'})
 
   -- Lesser used LSP functionality
   nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
@@ -545,6 +549,7 @@ local on_attach_global = function(_, bufnr)
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
     vim.lsp.buf.format()
   end, { desc = 'Format current buffer with LSP' })
+
 end
 
 -- document existing key chains
@@ -569,6 +574,7 @@ require('which-key').register({
 -- before setting up the servers.
 require('mason').setup()
 require('mason-lspconfig').setup()
+
 
 -- Enable the following language servers
 --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
@@ -625,6 +631,32 @@ mason_lspconfig.setup_handlers {
 --
 -- My additions
 --
+
+local lspconfig = require('lspconfig')
+
+
+local on_attach_local_rust = function(_, bufnr)
+  local nmap = function(keys, func, desc)
+    if desc then
+      desc = 'LSP: ' .. desc
+    end
+
+    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+  end
+
+  nmap('gq', ":w<cr>:!rustfmt %<cr>", 'rust format file')
+end
+
+local on_attach_rust = function(_, bufnr)
+  on_attach_global(_, bufnr)
+  on_attach_local_rust(_, bufnr)
+end
+
+
+lspconfig.rust_analyzer.setup {
+  on_attach = on_attach_rust
+}
+
 local on_attach_local_zig = function(_, bufnr)
   local nmap = function(keys, func, desc)
     if desc then
@@ -635,6 +667,7 @@ local on_attach_local_zig = function(_, bufnr)
   end
 
   nmap('gq', ":w<cr>:!zig fmt %<cr>", 'zig format file')
+  nmap('pf', ":w<cr>:!zig build <cr>", 'zig build')
 end
 
 local on_attach_zig = function(_, bufnr)
@@ -643,7 +676,7 @@ local on_attach_zig = function(_, bufnr)
 end
 
 
-local lspconfig = require('lspconfig')
+
 lspconfig.zls.setup {
   capabilities = capabilities,
   on_attach = on_attach_zig,
@@ -719,8 +752,6 @@ end
 lspconfig.glsl_analyzer.setup{
   on_attach = on_attach_glsl
 }
-
-
 
 
 --
