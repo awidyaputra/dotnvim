@@ -112,6 +112,9 @@ require('lazy').setup({
     },
   },
 
+  -- {'nvim-java/nvim-java'},
+  {'mfussenegger/nvim-jdtls'},
+
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim', opts = {} },
   {
