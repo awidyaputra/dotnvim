@@ -232,7 +232,8 @@ require('lazy').setup({
   -- Fuzzy Finder (files, lsp, etc)
   {
     'nvim-telescope/telescope.nvim',
-    branch = '0.1.x',
+    -- branch = '0.1.x',
+    branch = 'master',
     dependencies = {
       'nvim-lua/plenary.nvim',
       -- Fuzzy Finder Algorithm which requires local dependencies to be built.
@@ -670,7 +671,7 @@ local on_attach_local_rust = function(_, bufnr)
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
 
-  nmap('gq', ":w<cr>:!rustfmt %<cr>", 'rust format file')
+  nmap('gq', ":w<cr>:!rustfmt --edition=2024 %<cr>", 'rust format file')
 end
 
 local on_attach_rust = function(_, bufnr)
