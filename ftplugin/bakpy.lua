@@ -7,9 +7,6 @@ local nmap = function(keys, func, desc)
 end
 
 nmap('<leader>kr', ':w<cr>:!python %<cr>', 'Run current python file')
-nmap('<leader>kf', ':w<cr>:!black %<cr>', '')
 
-require('ibl').setup { scope = { enabled = false } }
-
-vim.lsp.config('jedi_language_server', {})
-vim.lsp.enable { 'jedi_language_server' }
+vim.lsp.config('jedi-language-server', {})
+vim.lsp.enable { 'jedi-language-server' }
