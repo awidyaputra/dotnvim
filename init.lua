@@ -132,6 +132,7 @@ vim.o.smartcase = true
 vim.o.signcolumn = 'yes'
 
 vim.o.tabstop = 4
+vim.o.shiftwidth = 4
 
 -- Decrease update time
 vim.o.updatetime = 250
@@ -940,7 +941,14 @@ require('lazy').setup({
       {
         '<leader>f',
         function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
+          require('conform').format({ async = true, lsp_format = 'fallback' }, function(err)
+            if not err then
+              local mode = vim.api.nvim_get_mode().mode
+              if vim.startswith(string.lower(mode), "v") then
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+              end
+            end
+          end)
         end,
         mode = '',
         desc = '[F]ormat buffer',
@@ -952,7 +960,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = { c = true, cpp = true, lua = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -1072,6 +1080,22 @@ require('lazy').setup({
     },
   },
 
+  {
+    'Olical/conjure',
+    -- ft = { 'clojure', 'fennel', }, -- etc
+    ft = { 'racket' }, -- etc
+    lazy = true,
+    init = function()
+      -- Set configuration options here
+      -- Uncomment this to get verbose logging to help diagnose internal Conjure issues
+      -- This is VERY helpful when reporting an issue with the project
+      -- vim.g["conjure#debug"] = true
+    end,
+
+    -- Optional cmp-conjure integration
+    -- dependencies = { 'PaterJason/cmp-conjure' },
+  },
+
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -1168,6 +1192,26 @@ require('lazy').setup({
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
 
+  {
+    "kiyoon/jupynium.nvim",
+    build = "pip3 install .",
+    -- build = "uv pip install . --python=$HOME/.virtualenvs/jupynium/bin/python",
+    -- build = "conda run --no-capture-output -n jupynium pip install .",
+  },
+  "rcarriga/nvim-notify",   -- optional
+  "stevearc/dressing.nvim", -- optional, UI for :JupyniumKernelSelect
+
+  {
+    "lervag/vimtex",
+    lazy = false,     -- we don't want to lazy load VimTeX
+    -- tag = "v2.15", -- uncomment to pin to a specific release
+    init = function()
+      -- VimTeX configuration goes here, e.g.
+      vim.g.vimtex_view_method = "zathura"
+      vim.g.vimtex_syntax_enabled = 0
+    end
+  },
+
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
@@ -1215,6 +1259,24 @@ require('lazy').setup({
     },
   },
 })
+
+require('luasnip.loaders.from_lua').load { paths = '~/.config/nvim/LuaSnip/' }
+local ls = require('luasnip')
+ls.config.set_config {
+  history = true,
+  enable_autosnippets = true,
+  store_selection_keys = '<Tab>',
+}
+
+
+vim.keymap.set({"i"}, "<c-k>", function() ls.expand() end, {silent = true})
+vim.keymap.set({"i", "s"}, "<c-l>", function() ls.jump(1) end, {silent = true})
+vim.keymap.set({"i", "s"}, "<c-j>", function() ls.jump(-1) end, {silent = true})
+vim.keymap.set({"i", "s"}, "<c-f>", function()
+  if ls.choice_active() then
+    ls.change_choice(1)
+  end
+end, {silent = true})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
