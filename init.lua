@@ -840,7 +840,7 @@ require('lazy').setup({
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
-        -- rust_analyzer = {},
+        rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -871,6 +871,7 @@ require('lazy').setup({
             print 'something3'
           end,
         },
+
       }
 
       -- Ensure the servers and tools above are installed
@@ -907,6 +908,8 @@ require('lazy').setup({
       })
       vim.lsp.enable 'clangd'
       vim.lsp.enable 'gopls'
+      vim.lsp.enable 'zls'
+      vim.lsp.enable 'rust_analyzer'
 
       -- require('mason-lspconfig').setup {
       --   ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
@@ -973,7 +976,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
+        python = { "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },

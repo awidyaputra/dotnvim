@@ -13,3 +13,7 @@ ls.add_snippets('python', {
 		t('3rd'),
 	}))
 })
+
+ls.add_snippets('python', {
+	s('nc', t('# %%'))
+})
