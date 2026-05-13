@@ -11,5 +11,3 @@ nmap('<leader>kf', ':w<cr>:!black %<cr>', '')
 
 require('ibl').setup { scope = { enabled = false } }
 
-vim.lsp.config('jedi_language_server', {})
-vim.lsp.enable { 'jedi_language_server' }

@@ -110,6 +110,8 @@ vim.o.mouse = 'a'
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
 
+vim.lsp.set_log_level 'off'
+
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
@@ -640,6 +642,7 @@ require('lazy').setup({
       },
     },
   },
+
   {
     -- Main LSP Configuration
     'neovim/nvim-lspconfig',
@@ -868,10 +871,9 @@ require('lazy').setup({
         clangd = {
           cmd = { 'clangd', '--header-insertion=never' },
           on_attach = function(_, bufnr)
-            print 'something3'
+            -- print 'something3'
           end,
         },
-
       }
 
       -- Ensure the servers and tools above are installed
@@ -896,6 +898,7 @@ require('lazy').setup({
       vim.lsp.config('*', {
         capabilities = capabilities,
       })
+
       vim.lsp.config('clangd', {
         filetypes = { 'cpp' },
         cmd = { 'clangd', '--header-insertion=never' },
@@ -906,6 +909,64 @@ require('lazy').setup({
           -- print 'configging clangd from lua folder'
         end,
       })
+
+      vim.filetype.add = {
+        extension = {
+          jinja = 'jinja',
+          jinja2 = 'jinja',
+          j2 = 'jinja',
+        },
+      }
+
+      vim.lsp.config('jinja_lsp', { filetypes = { 'jinja', 'python', 'rust' } })
+
+      vim.lsp.config('tsserver', {
+        filetypes = { 'typescript', 'typescriptreact', 'javascript', 'javascriptreact' },
+      })
+
+      vim.lsp.config('emmet_language_server', {
+        filetypes = { 'css', 'eruby', 'html', 'htmldjango', 'javascript', 'javascriptreact', 'less', 'sass', 'scss', 'pug', 'typescriptreact' },
+        cmd = { 'emmet-language-server', '--stdio' },
+      })
+
+      vim.lsp.config('tailwindcss', {
+        filetypes = { 'css', 'eruby', 'html', 'htmldjango', 'javascript', 'javascriptreact', 'less', 'sass', 'scss', 'pug', 'typescriptreact' },
+        cmd = { 'tailwindcss-language-server', '--stdio' },
+        settings = {
+          tailwindCSS = {
+            emmetCompletions = true,
+          },
+        },
+      })
+
+      vim.lsp.config('biome', {
+        filetypes = { 'html', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'json' },
+      })
+
+      vim.lsp.config('ruff', {
+        init_options = {
+          settings = {
+
+            organizeImports = true,
+          },
+        },
+      })
+
+      vim.lsp.config('zubanls', {
+        name = 'ZubanLS',
+        cmd = { 'zuban', 'server' },
+        root_markers = { 'pyproject.toml', '.git' },
+        filetypes = { 'python' },
+      })
+
+      vim.lsp.enable 'zubanls'
+      vim.lsp.enable 'ruff'
+      vim.lsp.enable 'tsserver'
+      -- vim.lsp.enable 'jinja_lsp'
+      vim.lsp.enable 'emmet_language_server'
+      vim.lsp.enable 'tailwindcss'
+      vim.lsp.enable 'biome'
+
       vim.lsp.enable 'clangd'
       vim.lsp.enable 'gopls'
       vim.lsp.enable 'zls'
@@ -931,6 +992,12 @@ require('lazy').setup({
     end,
   },
 
+  {
+    'pmizio/typescript-tools.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
+    opts = {},
+  },
+
   { -- Ouroboros. C/C++ switch between .h and .cpp
     'jakemason/ouroboros',
     requires = { { 'nvim-lua/plenary.nvim' } },
@@ -947,8 +1014,8 @@ require('lazy').setup({
           require('conform').format({ async = true, lsp_format = 'fallback' }, function(err)
             if not err then
               local mode = vim.api.nvim_get_mode().mode
-              if vim.startswith(string.lower(mode), "v") then
-                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+              if vim.startswith(string.lower(mode), 'v') then
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', true)
               end
             end
           end)
@@ -963,7 +1030,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, lua = true }
+        local disable_filetypes = { c = true, cpp = true, lua = true, python = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -976,10 +1043,39 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        python = { "black" },
+        python = { 'ruff_format' },
+
+        -- html = { 'djlint' },
+        -- htmldjango = { 'djlint' },
+        -- html = { 'biome' },
+        javascript = { 'biome', 'biome-check', 'biome-lint' },
+        typescript = { 'biome', 'biome-check', 'biome-lint' },
+        javascriptreact = { 'biome', 'biome-check', 'biome-lint' },
+        typescriptreact = { 'biome', 'biome-check', 'biome-lint' },
+        json = { 'biome', 'biome-check', 'biome-lint' },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      },
+      formatters = {
+        djlint = {
+          args = function(self, ctx)
+            local indent = vim.bo[ctx.buf].tabstop or 2
+            return { '--reformat', '--indent', tostring(2), '-' }
+          end,
+        },
+        ['biome-check'] = {
+          -- Example: dynamically set arguments based on the file's directory
+          args = function(self, ctx)
+            return { 'check', '--fix', '--unsafe', '--stdin-file-path', ctx.filename }
+          end,
+        },
+        ['biome-lint'] = {
+          -- Example: dynamically set arguments based on the file's directory
+          args = function(self, ctx)
+            return { 'lint', '--fix', '--unsafe', '--stdin-file-path', ctx.filename }
+          end,
+        },
       },
     },
   },
@@ -1196,23 +1292,23 @@ require('lazy').setup({
   },
 
   {
-    "kiyoon/jupynium.nvim",
-    build = "pip3 install .",
+    'kiyoon/jupynium.nvim',
+    build = 'pip3 install .',
     -- build = "uv pip install . --python=$HOME/.virtualenvs/jupynium/bin/python",
     -- build = "conda run --no-capture-output -n jupynium pip install .",
   },
-  "rcarriga/nvim-notify",   -- optional
-  "stevearc/dressing.nvim", -- optional, UI for :JupyniumKernelSelect
+  'rcarriga/nvim-notify', -- optional
+  'stevearc/dressing.nvim', -- optional, UI for :JupyniumKernelSelect
 
   {
-    "lervag/vimtex",
-    lazy = false,     -- we don't want to lazy load VimTeX
+    'lervag/vimtex',
+    lazy = false, -- we don't want to lazy load VimTeX
     -- tag = "v2.15", -- uncomment to pin to a specific release
     init = function()
       -- VimTeX configuration goes here, e.g.
-      vim.g.vimtex_view_method = "zathura"
+      vim.g.vimtex_view_method = 'zathura'
       vim.g.vimtex_syntax_enabled = 0
-    end
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -1264,22 +1360,36 @@ require('lazy').setup({
 })
 
 require('luasnip.loaders.from_lua').load { paths = '~/.config/nvim/LuaSnip/' }
-local ls = require('luasnip')
+local ls = require 'luasnip'
 ls.config.set_config {
   history = true,
   enable_autosnippets = true,
   store_selection_keys = '<Tab>',
 }
 
-
-vim.keymap.set({"i"}, "<c-k>", function() ls.expand() end, {silent = true})
-vim.keymap.set({"i", "s"}, "<c-l>", function() ls.jump(1) end, {silent = true})
-vim.keymap.set({"i", "s"}, "<c-j>", function() ls.jump(-1) end, {silent = true})
-vim.keymap.set({"i", "s"}, "<c-f>", function()
+vim.keymap.set({ 'i' }, '<c-k>', function()
+  ls.expand()
+end, { silent = true })
+vim.keymap.set({ 'i', 's' }, '<c-l>', function()
+  ls.jump(1)
+end, { silent = true })
+vim.keymap.set({ 'i', 's' }, '<c-j>', function()
+  ls.jump(-1)
+end, { silent = true })
+vim.keymap.set({ 'i', 's' }, '<c-f>', function()
   if ls.choice_active() then
     ls.change_choice(1)
   end
-end, {silent = true})
+end, { silent = true })
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'javascriptreact', 'typescriptreact', 'javascript', 'typescript', 'html', 'htmldjango' },
+  callback = function()
+    vim.opt_local.expandtab = true -- Use spaces
+    vim.opt_local.tabstop = 2 -- 2 spaces
+    vim.opt_local.shiftwidth = 2 -- 2 spaces
+  end,
+})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
